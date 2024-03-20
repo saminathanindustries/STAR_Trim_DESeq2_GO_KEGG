@@ -11,6 +11,11 @@ $4 sex_ploidy: female_diploid, female_triploid, male_haploid, male_diploid
 
 # All (DESeq2 input design): Combine experimental designs together (line, generation, sex, ploidy, and organ) as a new design
 
+##load packages 
+library(DESeq2)
+library(EnhancedVolcano)
+library(ggplot2)
+
 # Male Head TraKD F3 ----
 # Input data
 data_Male_Head_F3 <- read.table("Counts_Male_Head_F3.txt", header=TRUE, skip=1, row.names=1)
