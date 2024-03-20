@@ -1,6 +1,7 @@
 ##load packages 
 library(AnnotationHub)
 library(AnnotationDbi)
+library(clusterProfiler)
 
 # Create hub to save AnnotationHub object
 hub <- AnnotationHub()
