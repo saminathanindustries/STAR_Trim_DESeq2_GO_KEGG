@@ -1,0 +1,44 @@
+### Preprocessing RNAseq data
+
+### Step 1 Quality Control
+
+# 1. fastqc to check raw RNAseq data
+fastqc -o /media/apis/FastQC_result -t 12 /media/apis/rawdata/*.gz
+
+# 2. multiqc to combine multiple qc reports
+multiqc /media/apis/FastQC_result -o /media/apis/MultiQC_result
+
+# 3. STAR to map reads to reference genome
+mkdir ref_sj/
+
+STAR --runMode genomeGenerate --genomeDir ref_sj/ 
+--genomeFastaFiles GCF_009193385.2_Nvit_psr_1.1_genomic.fna 
+--sjdbGTFfile GCF_009193385.2_Nvit_psr_1.1_genomic.gtf 
+--runThreadN 16
+
+cd /media/apis/rawdata
+for i in *1.fq.gz; 
+do name=$(basename ${i} _1.fq.gz); 
+  STAR --runThreadN 16 
+  --runMode alignReads 
+  --genomeDir /media/apis/ref_sj/ 
+  --readFilesIn ${name}_1.fq.gz ${name}_2.fq.gz 
+  --readFilesCommand gunzip -c 
+  --outSAMtype BAM SortedByCoordinate 
+  --outFileNamePrefix /media/apis/mapped/${name} 
+  --limitBAMsortRAM 9795792026; 
+done
+
+# 4. Samtools to remove PCR duplicates
+cd /media/apis/mapped
+for i in *.bam; 
+do name=$(basename ${i} .bam); 
+  samtools rmdup -S ${name}.bam /media/apis/rmdup/${name}.bam;
+done
+
+# 5. clean quality control
+fastqc -o /media/apis/FastQC_result_rmdup -t 12 /media/apis/rmdup/*.bam
+multiqc /media/apis/FastQC_result_rmdup -o /media/apis/MultiQC_result_rmdup
+
+# 6. featureCounts to get gene counts
+featureCounts -a GCF_009193385.2_Nvit_psr_1.1_genomic.gtf -o /media/apis/count.tsv -T 8 /media/apis/mapped_rmdup/*.bam -p
