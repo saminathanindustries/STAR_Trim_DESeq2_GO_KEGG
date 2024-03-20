@@ -1,0 +1,98 @@
+###Using DESeq2 to analyze Nasonia RNAseq data
+
+#dataset: 
+#Nasonia RNAseq data
+#6 line_generation: traKD_F2&F3, traKD_F14&F15, WPL, WGDL, womKD_F2&F3, womKD_F14&F15
+$4 sex_ploidy: female_diploid, female_triploid, male_haploid, male_diploid
+#2 organ: head, abdomen
+
+#48 sample groups
+#5 replicates per experimental sample group
+
+#load packages 
+library(DESeq2)
+library(ggplot2)
+library(pheatmap)
+
+smallestGroupSize <- 3
+
+# Input data
+# Read unnormalized counts
+data_RQ0 <- read.table("Counts_RQ0.txt", header=TRUE, skip=1, row.names=1)
+countdata_RQ0 <- data_RQ0[ , 6:ncol(data_RQ0)]
+metadata_RQ0 <- read.table("Metadata_RQ0.txt", header=TRUE)
+
+# Convert metadata characters to factors
+metadata_RQ0$Sex_Line <- as.factor(metadata_RQ0$Sex_Line)
+metadata_RQ0$Ploidy <- as.factor(metadata_RQ0$Ploidy)
+metadata_RQ0$Organ <- as.factor(metadata_RQ0$Organ)
+
+# Setup DESeq dataset & Multi-factor design
+dds_RQ0 <- DESeqDataSetFromMatrix(countData = countdata_RQ0, 
+                                  colData = metadata_RQ0, 
+                                  design = ~ Sex_Line + Ploidy + Organ)
+
+# Pre-filtering low count genes
+keep_RQ0 <- rowSums(counts(dds_RQ0) >= 10) >= smallestGroupSize
+dds_RQ0 <- dds_RQ0[keep_RQ0,]
+
+# Differential expression analysis
+dds_RQ0 <- DESeq(dds_RQ0)
+
+# DE QC
+# checks on the count data to help us ensure that the samples/replicates look good
+# Calculates a variance stabilizing transformation
+vsd_RQ0 <- vst(dds_RQ0)
+ass <- assay(vsd_RQ0)
+write.csv(ass,file = 'vsd_RQ0.csv')
+ass <- read.csv('Cor_1.csv')
+ass_RQ0 <- cor(ass)
+
+# Principal Component Analysis (PCA) plot
+PCAdata_RQ0 <- plotPCA(vsd_RQ0, intgroup = c('Sex_Line','Ploidy','Organ'), returnData=TRUE)
+percentVar_RQ0 <- round(100 * attr(PCAdata_RQ0, "percentVar"))
+ggplot(PCAdata_RQ0, aes(PC1, PC2, color = Sex_Line, shape = Organ, size = Ploidy)) +
+  geom_point()+
+  scale_color_manual(values = c('Female_TraKD_F14'='#9e0142','Male_TraKD_F15'='#66c2a5',
+                                'Female_TraKD_F2'='#f46d43','Male_TraKD_F3'='#8073ac',
+                                'Male_WGDL'='#74add1','Female_WGDL'='#e08214',
+                                'Female_WomKD_F14'='#fee08b','Male_WomKD_F15'='#abdda4',
+                                'Female_WomKD_F2'='#d53e4f','Male_WomKD_F3'='#3288bd',
+                                'Male_WPL'='#5e4fa2','Female_WPL'='#fdae61')) +
+  scale_size_manual(values = c("Haploid"  = 5, "Diploid" = 2, 'Triploid' = 8)) +
+  scale_shape_manual(values = c("Head" = 17, "Abdomen" = 19)) +
+  labs(color = "Sex_Line", shape = "Organ", size = "Ploidy",
+       x = paste("PC1 (", percentVar_RQ0[1], "% Variance)"),
+       y = paste("PC2 (", percentVar_RQ0[2], "% Variance)")) +
+  scale_x_continuous(limits=c(-60,60)) +
+  scale_y_continuous(limits=c(-60,60)) +
+  guides(size = guide_legend(order=3),
+         shape = guide_legend(order=1, override.aes = list(size = 4)),
+         color = guide_legend(order=2, override.aes = list(size = 4)))
+
+# Hierarchical clustering heatmap
+vsd_RQ0_mat <- assay(vsd_RQ0)
+vsd_RQ0_cor <- cor(vsd_RQ0_mat)
+Ann_color_RQ0 = list(
+  Organ = c(Abdomen = "#3C5488B2", Head = "#F39B7FB2"),
+  Ploidy = c(Diploid = "#91D1C2B2", Triploid = "#DC0000B2",Haploid = "#7E6148B2"),
+  Sex_Line = c('Female_TraKD_F14'='#9e0142','Male_TraKD_F15'='#66c2a5',
+               'Female_TraKD_F2'='#f46d43','Male_TraKD_F3'='#8073ac',
+               'Male_WGDL'='#74add1','Female_WGDL'='#e08214',
+               'Female_WomKD_F14'='#fee08b','Male_WomKD_F15'='#abdda4',
+               'Female_WomKD_F2'='#d53e4f','Male_WomKD_F3'='#3288bd',
+               'Male_WPL'='#5e4fa2','Female_WPL'='#fdae61'))
+df_RQ0 <- as.data.frame(colData(vsd_RQ0)[,c('Sex_Line','Ploidy','Organ')])
+pheatmap(vsd_RQ0_cor, 
+         show_colnames=TRUE,
+         show_rownames=TRUE,
+         fontsize=3,
+         color = colorRampPalette(c("navy", "white", "firebrick3"))(100),
+         annotation_legend=TRUE,
+         annotation_col = df_RQ0,
+         annotation_colors = Ann_color_RQ0,
+         angle_col = "45",
+         border_color=NA,
+         scale="none",
+         cluster_rows = TRUE,
+         cluster_cols = TRUE)
