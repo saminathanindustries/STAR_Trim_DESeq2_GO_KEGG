@@ -1,0 +1,696 @@
+###Using DESeq2 to analyze Nasonia RNAseq data
+
+#dataset: 
+#Nasonia RNAseq data
+#6 line_generation: traKD_F2&F3, traKD_F14&F15, WPL, WGDL, womKD_F2&F3, womKD_F14&F15
+$4 sex_ploidy: female_diploid, female_triploid, male_haploid, male_diploid
+#2 organ: head, abdomen
+
+#48 sample groups
+#5 replicates per experimental sample group
+
+# All (DESeq2 input design): Combine experimental designs together (line, generation, sex, ploidy, and organ) as a new design
+
+# Male Head TraKD F3 ----
+# Input data
+data_Male_Head_F3 <- read.table("Counts_Male_Head_F3.txt", header=TRUE, skip=1, row.names=1)
+countdata_Male_Head_F3 <- data_Male_Head_F3[ , 6:ncol(data_Male_Head_F3)]
+metadata_Male_Head_F3 <- read.table("Metadata_Male_Head_F3.txt", header=TRUE)
+
+# Convert metadata characters to factors
+metadata_Male_Head_F3$All <- as.factor(metadata_Male_Head_F3$All)
+
+# Setup DESeq dataset & Multi-factor design
+dds_Male_Head_F3 <- DESeqDataSetFromMatrix(countData = countdata_Male_Head_F3, 
+                                           colData = metadata_Male_Head_F3, 
+                                           design = ~ All)
+
+# Pre-filtering low count genes
+keep_Male_Head_F3 <- rowSums(counts(dds_Male_Head_F3) >= 10) >= smallestGroupSize
+dds_Male_Head_F3 <- dds_Male_Head_F3[keep_Male_Head_F3,]
+
+# Differential expression analysis
+dds_Male_Head_F3 <- DESeq(dds_Male_Head_F3)
+
+# DESeq result
+res_Male_Head_F3 <- results(dds_Male_Head_F3, contrast = c("All", "TraKD_F3_Male_Diploid_Head",
+                                                           "TraKD_F3_Male_Haploid_Head"))
+write.csv(res_Male_Head_F3, file = "res_Male_Head_F3.csv")
+
+plotMA(res_Male_Head_F3,ylim = c(-2,2),alpha=0.05)
+
+keyvals_res_Male_Head_F3 <- ifelse(
+  res_Male_Head_F3$log2FoldChange > 1 & res_Male_Head_F3$padj < 0.05, 'indianred3',
+  ifelse(res_Male_Head_F3$log2FoldChange < -1 & res_Male_Head_F3$padj < 0.05, 'dodgerblue3',
+         'grey'))
+keyvals_res_Male_Head_F3[is.na(keyvals_res_Male_Head_F3)] <- 'grey'
+names(keyvals_res_Male_Head_F3)[keyvals_res_Male_Head_F3 == 'dodgerblue3'] <- 'Down regulated'
+names(keyvals_res_Male_Head_F3)[keyvals_res_Male_Head_F3 == 'grey'] <- 'Not significant'
+names(keyvals_res_Male_Head_F3)[keyvals_res_Male_Head_F3 == 'indianred3'] <- 'Up regulated'
+
+vol_res_Male_Head_F3 <- EnhancedVolcano(res_Male_Head_F3,
+                                        lab = rownames(res_Male_Head_F3),
+                                        x = 'log2FoldChange',
+                                        y = 'padj',
+                                        selectLab = rownames(res_Male_Head_F3)[which(names(keyvals_res_Male_Head_F3) %in% c('high', 'low'))],
+                                        xlab = bquote(~Log[2]~ 'fold change'),
+                                        ylab = bquote(~-Log[10]~ 'Padj'),
+                                        title = 'DEGs in Diploid vs Haploid',
+                                        subtitle = "Male Head TraKD F3",
+                                        pCutoff = 0.05, FCcutoff = 1,
+                                        pointSize = 5, labSize = 4,
+                                        axisLabSize=10, titleLabSize=12,
+                                        subtitleLabSize=10, captionLabSize=10,
+                                        colCustom = keyvals_res_Male_Head_F3,
+                                        colAlpha = 1,
+                                        legendPosition = 'right',
+                                        legendLabSize = 10,
+                                        legendIconSize = 5.0)
+vol_res_Male_Head_F3+ ggplot2::coord_cartesian()
+
+# Male Abdomen TraKD F3 ----
+# Input data
+data_Male_Abdo_F3 <- read.table("Counts_Male_Abdo_F3.txt", header=TRUE, skip=1, row.names=1)
+countdata_Male_Abdo_F3 <- data_Male_Abdo_F3[ , 6:ncol(data_Male_Abdo_F3)]
+metadata_Male_Abdo_F3 <- read.table("Metadata_Male_Abdo_F3.txt", header=TRUE)
+
+# Convert metadata characters to factors
+metadata_Male_Abdo_F3$All <- as.factor(metadata_Male_Abdo_F3$All)
+
+# Setup DESeq dataset & Multi-factor design
+dds_Male_Abdo_F3 <- DESeqDataSetFromMatrix(countData = countdata_Male_Abdo_F3, 
+                                           colData = metadata_Male_Abdo_F3, 
+                                           design = ~ All)
+
+# Pre-filtering low count genes
+keep_Male_Abdo_F3 <- rowSums(counts(dds_Male_Abdo_F3) >= 10) >= smallestGroupSize
+dds_Male_Abdo_F3 <- dds_Male_Abdo_F3[keep_Male_Abdo_F3,]
+
+# Differential expression analysis
+dds_Male_Abdo_F3 <- DESeq(dds_Male_Abdo_F3)
+
+# DESeq result
+res_Male_Abdo_F3 <- results(dds_Male_Abdo_F3, contrast = c("All", "TraKD_F3_Male_Diploid_Abdomen",
+                                                           "TraKD_F3_Male_Haploid_Abdomen"))
+write.csv(res_Male_Abdo_F3, file = "res_Male_Abdo_F3.csv")
+
+plotMA(res_Male_Abdo_F3,ylim = c(-8,8),alpha=0.05)
+
+keyvals_res_Male_Abdo_F3 <- ifelse(
+  res_Male_Abdo_F3$log2FoldChange > 1 & res_Male_Abdo_F3$padj < 0.05, 'indianred3',
+  ifelse(res_Male_Abdo_F3$log2FoldChange < -1 & res_Male_Abdo_F3$padj < 0.05, 'dodgerblue3',
+         'grey'))
+keyvals_res_Male_Abdo_F3[is.na(keyvals_res_Male_Abdo_F3)] <- 'grey'
+names(keyvals_res_Male_Abdo_F3)[keyvals_res_Male_Abdo_F3 == 'dodgerblue3'] <- 'Down regulated'
+names(keyvals_res_Male_Abdo_F3)[keyvals_res_Male_Abdo_F3 == 'grey'] <- 'Not significant'
+names(keyvals_res_Male_Abdo_F3)[keyvals_res_Male_Abdo_F3 == 'indianred3'] <- 'Up regulated'
+
+vol_res_Male_Abdo_F3 <- EnhancedVolcano(res_Male_Abdo_F3,
+                                        lab = rownames(res_Male_Abdo_F3),
+                                        x = 'log2FoldChange',
+                                        y = 'padj',
+                                        selectLab = rownames(res_Male_Abdo_F3)[which(names(keyvals_res_Male_Abdo_F3) %in% c('high', 'low'))],
+                                        xlab = bquote(~Log[2]~ 'fold change'),
+                                        ylab = bquote(~-Log[10]~ 'Padj'),
+                                        title = 'DEGs in Diploid vs Haploid',
+                                        subtitle = "Male Abdomen TraKD F3 ",
+                                        pCutoff = 0.05, FCcutoff = 1,
+                                        pointSize = 5, labSize = 4,
+                                        axisLabSize=10, titleLabSize=12,
+                                        subtitleLabSize=10, captionLabSize=10,
+                                        colCustom = keyvals_res_Male_Abdo_F3,
+                                        colAlpha = 1,
+                                        legendPosition = 'right',
+                                        legendLabSize = 10,
+                                        legendIconSize = 5.0)
+vol_res_Male_Abdo_F3+ ggplot2::coord_cartesian()
+
+# Male Head WPL ----
+# Input data
+data_Male_Head_WPL <- read.table("Counts_Male_Head_WPL.txt", header=TRUE, skip=1, row.names=1)
+countdata_Male_Head_WPL <- data_Male_Head_WPL[ , 6:ncol(data_Male_Head_WPL)]
+metadata_Male_Head_WPL <- read.table("Metadata_Male_Head_WPL.txt", header=TRUE)
+
+# Convert metadata characters to factors
+metadata_Male_Head_WPL$All <- as.factor(metadata_Male_Head_WPL$All)
+
+# Setup DESeq dataset & Multi-factor design
+dds_Male_Head_WPL <- DESeqDataSetFromMatrix(countData = countdata_Male_Head_WPL, 
+                                            colData = metadata_Male_Head_WPL, 
+                                            design = ~ All)
+
+# Pre-filtering low count genes
+keep_Male_Head_WPL <- rowSums(counts(dds_Male_Head_WPL) >= 10) >= smallestGroupSize
+dds_Male_Head_WPL <- dds_Male_Head_WPL[keep_Male_Head_WPL,]
+
+# Differential expression analysis
+dds_Male_Head_WPL <- DESeq(dds_Male_Head_WPL)
+
+# DESeq result
+res_Male_Head_WPL <- results(dds_Male_Head_WPL, contrast = c("All", "WPL_Male_Diploid_Head",
+                                                             "WPL_Male_Haploid_Head"))
+write.csv(res_Male_Head_WPL, file = "res_Male_Head_WPL.csv")
+
+plotMA(res_Male_Head_WPL,ylim = c(-8,8),alpha=0.05)
+
+keyvals_res_Male_Head_WPL <- ifelse(
+  res_Male_Head_WPL$log2FoldChange > 1 & res_Male_Head_WPL$padj < 0.05, 'indianred3',
+  ifelse(res_Male_Head_WPL$log2FoldChange < -1 & res_Male_Head_WPL$padj < 0.05, 'dodgerblue3',
+         'grey'))
+keyvals_res_Male_Head_WPL[is.na(keyvals_res_Male_Head_WPL)] <- 'grey'
+names(keyvals_res_Male_Head_WPL)[keyvals_res_Male_Head_WPL == 'dodgerblue3'] <- 'Down regulated'
+names(keyvals_res_Male_Head_WPL)[keyvals_res_Male_Head_WPL == 'grey'] <- 'Not significant'
+names(keyvals_res_Male_Head_WPL)[keyvals_res_Male_Head_WPL == 'indianred3'] <- 'Up regulated'
+
+vol_res_Male_Head_WPL <- EnhancedVolcano(res_Male_Head_WPL,
+                                         lab = rownames(res_Male_Head_WPL),
+                                         x = 'log2FoldChange',
+                                         y = 'padj',
+                                         selectLab = rownames(res_Male_Head_WPL)[which(names(keyvals_res_Male_Head_WPL) %in% c('high', 'low'))],
+                                         xlab = bquote(~Log[2]~ 'fold change'),
+                                         ylab = bquote(~-Log[10]~ 'Padj'),
+                                         title = 'DEGs in Diploid vs Haploid',
+                                         subtitle = "Male Head WPL",
+                                         pCutoff = 0.05, FCcutoff = 1,
+                                         pointSize = 5, labSize = 4,
+                                         axisLabSize=10, titleLabSize=12,
+                                         subtitleLabSize=10, captionLabSize=10,
+                                         colCustom = keyvals_res_Male_Head_WPL,
+                                         colAlpha = 1,
+                                         legendPosition = 'right',
+                                         legendLabSize = 10,
+                                         legendIconSize = 5.0)
+vol_res_Male_Head_WPL+ ggplot2::coord_cartesian()
+
+# Male Abdomen WPL ----
+# Input data
+data_Male_Abdo_WPL <- read.table("Counts_Male_Abdo_WPL.txt", header=TRUE, skip=1, row.names=1)
+countdata_Male_Abdo_WPL <- data_Male_Abdo_WPL[ , 6:ncol(data_Male_Abdo_WPL)]
+metadata_Male_Abdo_WPL <- read.table("Metadata_Male_Abdo_WPL.txt", header=TRUE)
+
+# Convert metadata characters to factors
+metadata_Male_Abdo_WPL$All <- as.factor(metadata_Male_Abdo_WPL$All)
+
+# Setup DESeq dataset & Multi-factor design
+dds_Male_Abdo_WPL <- DESeqDataSetFromMatrix(countData = countdata_Male_Abdo_WPL, 
+                                            colData = metadata_Male_Abdo_WPL, 
+                                            design = ~ All)
+
+# Pre-filtering low count genes
+keep_Male_Abdo_WPL <- rowSums(counts(dds_Male_Abdo_WPL) >= 10) >= smallestGroupSize
+dds_Male_Abdo_WPL <- dds_Male_Abdo_WPL[keep_Male_Abdo_WPL,]
+
+# Differential expression analysis
+dds_Male_Abdo_WPL <- DESeq(dds_Male_Abdo_WPL)
+
+# DESeq result
+res_Male_Abdo_WPL <- results(dds_Male_Abdo_WPL, contrast = c("All", "WPL_Male_Diploid_Abdomen",
+                                                             "WPL_Male_Haploid_Abdomen"))
+write.csv(res_Male_Abdo_WPL, file = "res_Male_Abdo_WPL.csv")
+
+plotMA(res_Male_Abdo_WPL,ylim = c(-8,8),alpha=0.05)
+
+keyvals_res_Male_Abdo_WPL <- ifelse(
+  res_Male_Abdo_WPL$log2FoldChange > 1 & res_Male_Abdo_WPL$padj < 0.05, 'indianred3',
+  ifelse(res_Male_Abdo_WPL$log2FoldChange < -1 & res_Male_Abdo_WPL$padj < 0.05, 'dodgerblue3',
+         'grey'))
+keyvals_res_Male_Abdo_WPL[is.na(keyvals_res_Male_Abdo_WPL)] <- 'grey'
+names(keyvals_res_Male_Abdo_WPL)[keyvals_res_Male_Abdo_WPL == 'dodgerblue3'] <- 'Down regulated'
+names(keyvals_res_Male_Abdo_WPL)[keyvals_res_Male_Abdo_WPL == 'grey'] <- 'Not significant'
+names(keyvals_res_Male_Abdo_WPL)[keyvals_res_Male_Abdo_WPL == 'indianred3'] <- 'Up regulated'
+
+vol_res_Male_Abdo_WPL <- EnhancedVolcano(res_Male_Abdo_WPL,
+                                         lab = rownames(res_Male_Abdo_WPL),
+                                         x = 'log2FoldChange',
+                                         y = 'padj',
+                                         selectLab = rownames(res_Male_Abdo_WPL)[which(names(keyvals_res_Male_Abdo_WPL) %in% c('high', 'low'))],
+                                         xlab = bquote(~Log[2]~ 'fold change'),
+                                         ylab = bquote(~-Log[10]~ 'Padj'),
+                                         title = 'DEGs in Diploid vs Haploid',
+                                         subtitle = "Male Abdomen WPL",
+                                         pCutoff = 0.05, FCcutoff = 1,
+                                         pointSize = 5, labSize = 4,
+                                         axisLabSize=10, titleLabSize=12,
+                                         subtitleLabSize=10, captionLabSize=10,
+                                         colCustom = keyvals_res_Male_Abdo_WPL,
+                                         colAlpha = 1,
+                                         legendPosition = 'right',
+                                         legendLabSize = 10,
+                                         legendIconSize = 5.0)
+vol_res_Male_Abdo_WPL+ ggplot2::coord_cartesian()
+
+# Male Head TraKD F15 ----
+# Input data
+data_Male_Head_F15 <- read.table("Counts_Male_Head_F15.txt", header=TRUE, skip=1, row.names=1)
+countdata_Male_Head_F15 <- data_Male_Head_F15[ , 6:ncol(data_Male_Head_F15)]
+metadata_Male_Head_F15 <- read.table("Metadata_Male_Head_F15.txt", header=TRUE)
+
+# Convert metadata characters to factors
+metadata_Male_Head_F15$All <- as.factor(metadata_Male_Head_F15$All)
+
+# Setup DESeq dataset & Multi-factor design
+dds_Male_Head_F15 <- DESeqDataSetFromMatrix(countData = countdata_Male_Head_F15, 
+                                            colData = metadata_Male_Head_F15, 
+                                            design = ~ All)
+
+# Pre-filtering low count genes
+keep_Male_Head_F15 <- rowSums(counts(dds_Male_Head_F15) >= 10) >= smallestGroupSize
+dds_Male_Head_F15 <- dds_Male_Head_F15[keep_Male_Head_F15,]
+
+# Differential expression analysis
+dds_Male_Head_F15 <- DESeq(dds_Male_Head_F15)
+
+# DESeq result
+res_Male_Head_F15 <- results(dds_Male_Head_F15, contrast = c("All", "TraKD_F15_Male_Diploid_Head",
+                                                             "TraKD_F15_Male_Haploid_Head"))
+write.csv(res_Male_Head_F15, file = "res_Male_Head_F15.csv")
+
+plotMA(res_Male_Head_F15,ylim = c(-8,8),alpha=0.05)
+
+keyvals_res_Male_Head_F15 <- ifelse(
+  res_Male_Head_F15$log2FoldChange > 1 & res_Male_Head_F15$padj < 0.05, 'indianred3',
+  ifelse(res_Male_Head_F15$log2FoldChange < -1 & res_Male_Head_F15$padj < 0.05, 'dodgerblue3',
+         'grey'))
+keyvals_res_Male_Head_F15[is.na(keyvals_res_Male_Head_F15)] <- 'grey'
+names(keyvals_res_Male_Head_F15)[keyvals_res_Male_Head_F15 == 'dodgerblue3'] <- 'Down regulated'
+names(keyvals_res_Male_Head_F15)[keyvals_res_Male_Head_F15 == 'grey'] <- 'Not significant'
+names(keyvals_res_Male_Head_F15)[keyvals_res_Male_Head_F15 == 'indianred3'] <- 'Up regulated'
+
+vol_res_Male_Head_F15 <- EnhancedVolcano(res_Male_Head_F15,
+                                         lab = rownames(res_Male_Head_F15),
+                                         x = 'log2FoldChange',
+                                         y = 'padj',
+                                         selectLab = rownames(res_Male_Head_F15)[which(names(keyvals_res_Male_Head_F15) %in% c('high', 'low'))],
+                                         xlab = bquote(~Log[2]~ 'fold change'),
+                                         ylab = bquote(~-Log[10]~ 'Padj'),
+                                         title = 'DEGs in Diploid vs Haploid',
+                                         subtitle = "Male Head TraKD F15",
+                                         pCutoff = 0.05, FCcutoff = 1,
+                                         pointSize = 5, labSize = 4,
+                                         axisLabSize=10, titleLabSize=12,
+                                         subtitleLabSize=10, captionLabSize=10,
+                                         colCustom = keyvals_res_Male_Head_F15,
+                                         colAlpha = 1,
+                                         legendPosition = 'right',
+                                         legendLabSize = 10,
+                                         legendIconSize = 5.0)
+vol_res_Male_Head_F15+ ggplot2::coord_cartesian()
+
+# Male Abdomen TraKD F15 ----
+# Input data
+data_Male_Abdo_F15 <- read.table("Counts_Male_Abdo_F15.txt", header=TRUE, skip=1, row.names=1)
+countdata_Male_Abdo_F15 <- data_Male_Abdo_F15[ , 6:ncol(data_Male_Abdo_F15)]
+metadata_Male_Abdo_F15 <- read.table("Metadata_Male_Abdo_F15.txt", header=TRUE)
+
+# Convert metadata characters to factors
+metadata_Male_Abdo_F15$All <- as.factor(metadata_Male_Abdo_F15$All)
+
+# Setup DESeq dataset & Multi-factor design
+dds_Male_Abdo_F15 <- DESeqDataSetFromMatrix(countData = countdata_Male_Abdo_F15, 
+                                            colData = metadata_Male_Abdo_F15, 
+                                            design = ~ All)
+
+# Pre-filtering low count genes
+keep_Male_Abdo_F15 <- rowSums(counts(dds_Male_Abdo_F15) >= 10) >= smallestGroupSize
+dds_Male_Abdo_F15 <- dds_Male_Abdo_F15[keep_Male_Abdo_F15,]
+
+# Differential expression analysis
+dds_Male_Abdo_F15 <- DESeq(dds_Male_Abdo_F15)
+
+# DESeq result
+res_Male_Abdo_F15 <- results(dds_Male_Abdo_F15, contrast = c("All", "TraKD_F15_Male_Diploid_Abdomen",
+                                                             "TraKD_F15_Male_Haploid_Abdomen"))
+write.csv(res_Male_Abdo_F15, file = "res_Male_Abdo_F15.csv")
+
+plotMA(res_Male_Abdo_F15,ylim = c(-8,8),alpha=0.05)
+
+keyvals_res_Male_Abdo_F15 <- ifelse(
+  res_Male_Abdo_F15$log2FoldChange > 1 & res_Male_Abdo_F15$padj < 0.05, 'indianred3',
+  ifelse(res_Male_Abdo_F15$log2FoldChange < -1 & res_Male_Abdo_F15$padj < 0.05, 'dodgerblue3',
+         'grey'))
+keyvals_res_Male_Abdo_F15[is.na(keyvals_res_Male_Abdo_F15)] <- 'grey'
+names(keyvals_res_Male_Abdo_F15)[keyvals_res_Male_Abdo_F15 == 'dodgerblue3'] <- 'Down regulated'
+names(keyvals_res_Male_Abdo_F15)[keyvals_res_Male_Abdo_F15 == 'grey'] <- 'Not significant'
+names(keyvals_res_Male_Abdo_F15)[keyvals_res_Male_Abdo_F15 == 'indianred3'] <- 'Up regulated'
+
+vol_res_Male_Abdo_F15 <- EnhancedVolcano(res_Male_Abdo_F15,
+                                         lab = rownames(res_Male_Abdo_F15),
+                                         x = 'log2FoldChange',
+                                         y = 'padj',
+                                         selectLab = rownames(res_Male_Abdo_F15)[which(names(keyvals_res_Male_Abdo_F15) %in% c('high', 'low'))],
+                                         xlab = bquote(~Log[2]~ 'fold change'),
+                                         ylab = bquote(~-Log[10]~ 'Padj'),
+                                         title = 'DEGs in Diploid vs Haploid',
+                                         subtitle = "Male Abdomen TraKD F15",
+                                         pCutoff = 0.05, FCcutoff = 1,
+                                         pointSize = 5, labSize = 4,
+                                         axisLabSize=10, titleLabSize=12,
+                                         subtitleLabSize=10, captionLabSize=10,
+                                         colCustom = keyvals_res_Male_Abdo_F15,
+                                         colAlpha = 1,
+                                         legendPosition = 'right',
+                                         legendLabSize = 10,
+                                         legendIconSize = 5.0)
+vol_res_Male_Abdo_F15+ ggplot2::coord_cartesian()
+
+# Female Head TraKD F2 ----
+# Input data
+data_Female_Head_F2 <- read.table("Counts_Female_Head_F2.txt", header=TRUE, skip=1, row.names=1)
+countdata_Female_Head_F2 <- data_Female_Head_F2[ , 6:ncol(data_Female_Head_F2)]
+metadata_Female_Head_F2 <- read.table("Metadata_Female_Head_F2.txt", header=TRUE)
+
+# Convert metadata characters to factors
+metadata_Female_Head_F2$All <- as.factor(metadata_Female_Head_F2$All)
+
+# Setup DESeq dataset & Multi-factor design
+dds_Female_Head_F2 <- DESeqDataSetFromMatrix(countData = countdata_Female_Head_F2, 
+                                             colData = metadata_Female_Head_F2, 
+                                             design = ~ All)
+
+# Pre-filtering low count genes
+keep_Female_Head_F2 <- rowSums(counts(dds_Female_Head_F2) >= 10) >= smallestGroupSize
+dds_Female_Head_F2 <- dds_Female_Head_F2[keep_Female_Head_F2,]
+
+# Differential expression analysis
+dds_Female_Head_F2 <- DESeq(dds_Female_Head_F2)
+
+# DESeq result
+res_Female_Head_F2 <- results(dds_Female_Head_F2, contrast = c("All", "TraKD_F2_Female_Triploid_Head",
+                                                               "TraKD_F2_Female_Diploid_Head"))
+write.csv(res_Female_Head_F2, file = "res_Female_Head_F2.csv")
+
+plotMA(res_Female_Head_F2,ylim = c(-8,8),alpha=0.05)
+
+keyvals_res_Female_Head_F2 <- ifelse(
+  res_Female_Head_F2$log2FoldChange > 1 & res_Female_Head_F2$padj < 0.05, 'indianred3',
+  ifelse(res_Female_Head_F2$log2FoldChange < -1 & res_Female_Head_F2$padj < 0.05, 'dodgerblue3',
+         'grey'))
+keyvals_res_Female_Head_F2[is.na(keyvals_res_Female_Head_F2)] <- 'grey'
+names(keyvals_res_Female_Head_F2)[keyvals_res_Female_Head_F2 == 'dodgerblue3'] <- 'Down regulated'
+names(keyvals_res_Female_Head_F2)[keyvals_res_Female_Head_F2 == 'grey'] <- 'Not significant'
+names(keyvals_res_Female_Head_F2)[keyvals_res_Female_Head_F2 == 'indianred3'] <- 'Up regulated'
+
+vol_res_Female_Head_F2 <- EnhancedVolcano(res_Female_Head_F2,
+                                          lab = rownames(res_Female_Head_F2),
+                                          x = 'log2FoldChange',
+                                          y = 'padj',
+                                          selectLab = rownames(res_Female_Head_F2)[which(names(keyvals_res_Female_Head_F2) %in% c('high', 'low'))],
+                                          xlab = bquote(~Log[2]~ 'fold change'),
+                                          ylab = bquote(~-Log[10]~ 'Padj'),
+                                          title = 'DEGs in Triploid vs Diploid',
+                                          subtitle = "Female Head TraKD F2",
+                                          pCutoff = 0.05, FCcutoff = 1,
+                                          pointSize = 5, labSize = 4,
+                                          axisLabSize=10, titleLabSize=12,
+                                          subtitleLabSize=10, captionLabSize=10,
+                                          colCustom = keyvals_res_Female_Head_F2,
+                                          colAlpha = 1,
+                                          legendPosition = 'right',
+                                          legendLabSize = 10,
+                                          legendIconSize = 5.0)
+vol_res_Female_Head_F2+ ggplot2::coord_cartesian()
+
+# Female Abdomen TraKD F2 ----
+# Input data
+data_Female_Abdo_F2 <- read.table("Counts_Female_Abdo_F2.txt", header=TRUE, skip=1, row.names=1)
+countdata_Female_Abdo_F2 <- data_Female_Abdo_F2[ , 6:ncol(data_Female_Abdo_F2)]
+metadata_Female_Abdo_F2 <- read.table("Metadata_Female_Abdo_F2.txt", header=TRUE)
+
+# Convert metadata characters to factors
+metadata_Female_Abdo_F2$All <- as.factor(metadata_Female_Abdo_F2$All)
+
+# Setup DESeq dataset & Multi-factor design
+dds_Female_Abdo_F2 <- DESeqDataSetFromMatrix(countData = countdata_Female_Abdo_F2, 
+                                             colData = metadata_Female_Abdo_F2, 
+                                             design = ~ All)
+
+# Pre-filtering low count genes
+keep_Female_Abdo_F2 <- rowSums(counts(dds_Female_Abdo_F2) >= 10) >= smallestGroupSize
+dds_Female_Abdo_F2 <- dds_Female_Abdo_F2[keep_Female_Abdo_F2,]
+
+# Differential expression analysis
+dds_Female_Abdo_F2 <- DESeq(dds_Female_Abdo_F2)
+
+# DESeq result
+res_Female_Abdomen_F2 <- results(dds_Female_Abdo_F2, contrast = c("All", "TraKD_F2_Female_Triploid_Abdomen",
+                                                                  "TraKD_F2_Female_Diploid_Abdomen"))
+write.csv(res_Female_Abdomen_F2, file = "res_Female_Abdomen_F2.csv")
+
+plotMA(res_Female_Abdomen_F2,ylim = c(-8,8),alpha=0.05)
+
+keyvals_res_Female_Abdomen_F2 <- ifelse(
+  res_Female_Abdomen_F2$log2FoldChange > 1 & res_Female_Abdomen_F2$padj < 0.05, 'indianred3',
+  ifelse(res_Female_Abdomen_F2$log2FoldChange < -1 & res_Female_Abdomen_F2$padj < 0.05, 'dodgerblue3',
+         'grey'))
+keyvals_res_Female_Abdomen_F2[is.na(keyvals_res_Female_Abdomen_F2)] <- 'grey'
+names(keyvals_res_Female_Abdomen_F2)[keyvals_res_Female_Abdomen_F2 == 'dodgerblue3'] <- 'Down regulated'
+names(keyvals_res_Female_Abdomen_F2)[keyvals_res_Female_Abdomen_F2 == 'grey'] <- 'Not significant'
+names(keyvals_res_Female_Abdomen_F2)[keyvals_res_Female_Abdomen_F2 == 'indianred3'] <- 'Up regulated'
+
+vol_res_Female_Abdomen_F2 <- EnhancedVolcano(res_Female_Abdomen_F2,
+                                             lab = rownames(res_Female_Abdomen_F2),
+                                             x = 'log2FoldChange',
+                                             y = 'padj',
+                                             selectLab = rownames(res_Female_Abdomen_F2)[which(names(keyvals_res_Female_Abdomen_F2) %in% c('high', 'low'))],
+                                             xlab = bquote(~Log[2]~ 'fold change'),
+                                             ylab = bquote(~-Log[10]~ 'Padj'),
+                                             title = 'DEGs in Triploid vs Diploid',
+                                             subtitle = "Female Abdomen TraKD F2",
+                                             pCutoff = 0.05, FCcutoff = 1,
+                                             pointSize = 5, labSize = 4,
+                                             axisLabSize=10, titleLabSize=12,
+                                             subtitleLabSize=10, captionLabSize=10,
+                                             colCustom = keyvals_res_Female_Abdomen_F2,
+                                             colAlpha = 1,
+                                             legendPosition = 'right',
+                                             legendLabSize = 10,
+                                             legendIconSize = 5.0)
+vol_res_Female_Abdomen_F2+ ggplot2::coord_cartesian()
+
+# Female Head WPL ----
+# Input data
+data_Female_Head_WPL <- read.table("Counts_Female_Head_WPL.txt", header=TRUE, skip=1, row.names=1)
+countdata_Female_Head_WPL <- data_Female_Head_WPL[ , 6:ncol(data_Female_Head_WPL)]
+metadata_Female_Head_WPL <- read.table("Metadata_Female_Head_WPL.txt", header=TRUE)
+
+# Convert metadata characters to factors
+metadata_Female_Head_WPL$All <- as.factor(metadata_Female_Head_WPL$All)
+
+# Setup DESeq dataset & Multi-factor design
+dds_Female_Head_WPL <- DESeqDataSetFromMatrix(countData = countdata_Female_Head_WPL, 
+                                              colData = metadata_Female_Head_WPL, 
+                                              design = ~ All)
+
+# Pre-filtering low count genes
+keep_Female_Head_WPL <- rowSums(counts(dds_Female_Head_WPL) >= 10) >= smallestGroupSize
+dds_Female_Head_WPL <- dds_Female_Head_WPL[keep_Female_Head_WPL,]
+
+# Differential expression analysis
+dds_Female_Head_WPL <- DESeq(dds_Female_Head_WPL)
+
+# DESeq result
+res_Female_Head_WPL <- results(dds_Female_Head_WPL, contrast = c("All", "WPL_Female_Triploid_Head",
+                                                                 "WPL_Female_Diploid_Head"))
+write.csv(res_Female_Head_WPL, file = "res_Female_Head_WPL.csv")
+
+plotMA(res_Female_Head_WPL,ylim = c(-8,8),alpha=0.05)
+
+keyvals_res_Female_Head_WPL <- ifelse(
+  res_Female_Head_WPL$log2FoldChange > 1 & res_Female_Head_WPL$padj < 0.05, 'indianred3',
+  ifelse(res_Female_Head_WPL$log2FoldChange < -1 & res_Female_Head_WPL$padj < 0.05, 'dodgerblue3',
+         'grey'))
+keyvals_res_Female_Head_WPL[is.na(keyvals_res_Female_Head_WPL)] <- 'grey'
+names(keyvals_res_Female_Head_WPL)[keyvals_res_Female_Head_WPL == 'dodgerblue3'] <- 'Down regulated'
+names(keyvals_res_Female_Head_WPL)[keyvals_res_Female_Head_WPL == 'grey'] <- 'Not significant'
+names(keyvals_res_Female_Head_WPL)[keyvals_res_Female_Head_WPL == 'indianred3'] <- 'Up regulated'
+
+vol_res_Female_Head_WPL <- EnhancedVolcano(res_Female_Head_WPL,
+                                           lab = rownames(res_Female_Head_WPL),
+                                           x = 'log2FoldChange',
+                                           y = 'padj',
+                                           selectLab = rownames(res_Female_Head_WPL)[which(names(keyvals_res_Female_Head_WPL) %in% c('high', 'low'))],
+                                           xlab = bquote(~Log[2]~ 'fold change'),
+                                           ylab = bquote(~-Log[10]~ 'Padj'),
+                                           title = 'DEGs in Triploid vs Diploid',
+                                           subtitle = "Female Head WPL",
+                                           pCutoff = 0.05, FCcutoff = 1,
+                                           pointSize = 5, labSize = 4,
+                                           axisLabSize=10, titleLabSize=12,
+                                           subtitleLabSize=10, captionLabSize=10,
+                                           colCustom = keyvals_res_Female_Head_WPL,
+                                           colAlpha = 1,
+                                           legendPosition = 'right',
+                                           legendLabSize = 10,
+                                           legendIconSize = 5.0)
+vol_res_Female_Head_WPL+ ggplot2::coord_cartesian()
+
+# Female Abdomen WPL ----
+# Input data
+data_Female_Abdo_WPL <- read.table("Counts_Female_Abdo_WPL.txt", header=TRUE, skip=1, row.names=1)
+countdata_Female_Abdo_WPL <- data_Female_Abdo_WPL[ , 6:ncol(data_Female_Abdo_WPL)]
+metadata_Female_Abdo_WPL <- read.table("Metadata_Female_Abdo_WPL.txt", header=TRUE)
+
+# Convert metadata characters to factors
+metadata_Female_Abdo_WPL$All <- as.factor(metadata_Female_Abdo_WPL$All)
+
+# Setup DESeq dataset & Multi-factor design
+dds_Female_Abdo_WPL <- DESeqDataSetFromMatrix(countData = countdata_Female_Abdo_WPL, 
+                                              colData = metadata_Female_Abdo_WPL, 
+                                              design = ~ All)
+
+# Pre-filtering low count genes
+keep_Female_Abdo_WPL <- rowSums(counts(dds_Female_Abdo_WPL) >= 10) >= smallestGroupSize
+dds_Female_Abdo_WPL <- dds_Female_Abdo_WPL[keep_Female_Abdo_WPL,]
+
+# Differential expression analysis
+dds_Female_Abdo_WPL <- DESeq(dds_Female_Abdo_WPL)
+
+# DESeq result
+res_Female_Abdo_WPL <- results(dds_Female_Abdo_WPL, contrast = c("All", "WPL_Female_Triploid_Abdomen",
+                                                                 "WPL_Female_Diploid_Abdomen"))
+write.csv(res_Female_Abdo_WPL, file = "res_Female_Abdo_WPL.csv")
+
+plotMA(res_Female_Abdo_WPL,ylim = c(-8,8),alpha=0.05)
+
+keyvals_res_Female_Abdo_WPL <- ifelse(
+  res_Female_Abdo_WPL$log2FoldChange > 1 & res_Female_Abdo_WPL$padj < 0.05, 'indianred3',
+  ifelse(res_Female_Abdo_WPL$log2FoldChange < -1 & res_Female_Abdo_WPL$padj < 0.05, 'dodgerblue3',
+         'grey'))
+keyvals_res_Female_Abdo_WPL[is.na(keyvals_res_Female_Abdo_WPL)] <- 'grey'
+names(keyvals_res_Female_Abdo_WPL)[keyvals_res_Female_Abdo_WPL == 'dodgerblue3'] <- 'Down regulated'
+names(keyvals_res_Female_Abdo_WPL)[keyvals_res_Female_Abdo_WPL == 'grey'] <- 'Not significant'
+names(keyvals_res_Female_Abdo_WPL)[keyvals_res_Female_Abdo_WPL == 'indianred3'] <- 'Up regulated'
+
+vol_res_Female_Abdo_WPL <- EnhancedVolcano(res_Female_Abdo_WPL,
+                                           lab = rownames(res_Female_Abdo_WPL),
+                                           x = 'log2FoldChange',
+                                           y = 'padj',
+                                           selectLab = rownames(res_Female_Abdo_WPL)[which(names(keyvals_res_Female_Abdo_WPL) %in% c('high', 'low'))],
+                                           xlab = bquote(~Log[2]~ 'fold change'),
+                                           ylab = bquote(~-Log[10]~ 'Padj'),
+                                           title = 'DEGs in Triploid vs Diploid',
+                                           subtitle = "Female Abdomen WPL",
+                                           pCutoff = 0.05, FCcutoff = 1,
+                                           pointSize = 5, labSize = 4,
+                                           axisLabSize=10, titleLabSize=12,
+                                           subtitleLabSize=10, captionLabSize=10,
+                                           colCustom = keyvals_res_Female_Abdo_WPL,
+                                           colAlpha = 1,
+                                           legendPosition = 'right',
+                                           legendLabSize = 10,
+                                           legendIconSize = 5.0)
+vol_res_Female_Abdo_WPL+ ggplot2::coord_cartesian()
+
+# Female Head TraKD F14 ----
+# Input data
+data_Female_Head_F14 <- read.table("Counts_Female_Head_F14.txt", header=TRUE, skip=1, row.names=1)
+countdata_Female_Head_F14 <- data_Female_Head_F14[ , 6:ncol(data_Female_Head_F14)]
+metadata_Female_Head_F14 <- read.table("Metadata_Female_Head_F14.txt", header=TRUE)
+
+# Convert metadata characters to factors
+metadata_Female_Head_F14$All <- as.factor(metadata_Female_Head_F14$All)
+
+# Setup DESeq dataset & Multi-factor design
+dds_Female_Head_F14 <- DESeqDataSetFromMatrix(countData = countdata_Female_Head_F14, 
+                                              colData = metadata_Female_Head_F14, 
+                                              design = ~ All)
+
+# Pre-filtering low count genes
+keep_Female_Head_F14 <- rowSums(counts(dds_Female_Head_F14) >= 10) >= smallestGroupSize
+dds_Female_Head_F14 <- dds_Female_Head_F14[keep_Female_Head_F14,]
+
+# Differential expression analysis
+dds_Female_Head_F14 <- DESeq(dds_Female_Head_F14)
+
+# DESeq result
+res_Female_Head_F14 <- results(dds_Female_Head_F14, contrast = c("All", "TraKD_F14_Female_Triploid_Head",
+                                                                 "TraKD_F14_Female_Diploid_Head"))
+write.csv(res_Female_Head_F14, file = "res_Female_Head_F14.csv")
+
+plotMA(res_Female_Head_F14,ylim = c(-8,8),alpha=0.05)
+
+keyvals_res_Female_Head_F14 <- ifelse(
+  res_Female_Head_F14$log2FoldChange > 1 & res_Female_Head_F14$padj < 0.05, 'indianred3',
+  ifelse(res_Female_Head_F14$log2FoldChange < -1 & res_Female_Head_F14$padj < 0.05, 'dodgerblue3',
+         'grey'))
+keyvals_res_Female_Head_F14[is.na(keyvals_res_Female_Head_F14)] <- 'grey'
+names(keyvals_res_Female_Head_F14)[keyvals_res_Female_Head_F14 == 'dodgerblue3'] <- 'Down regulated'
+names(keyvals_res_Female_Head_F14)[keyvals_res_Female_Head_F14 == 'grey'] <- 'Not significant'
+names(keyvals_res_Female_Head_F14)[keyvals_res_Female_Head_F14 == 'indianred3'] <- 'Up regulated'
+
+vol_res_Female_Head_F14 <- EnhancedVolcano(res_Female_Head_F14,
+                                           lab = rownames(res_Female_Head_F14),
+                                           x = 'log2FoldChange',
+                                           y = 'padj',
+                                           selectLab = rownames(res_Female_Head_F14)[which(names(keyvals_res_Female_Head_F14) %in% c('high', 'low'))],
+                                           xlab = bquote(~Log[2]~ 'fold change'),
+                                           ylab = bquote(~-Log[10]~ 'Padj'),
+                                           title = 'DEGs in Triploid vs Diploid',
+                                           subtitle = "Female Head TraKD F14",
+                                           pCutoff = 0.05, FCcutoff = 1,
+                                           pointSize = 5, labSize = 4,
+                                           axisLabSize=10, titleLabSize=12,
+                                           subtitleLabSize=10, captionLabSize=10,
+                                           colCustom = keyvals_res_Female_Head_F14,
+                                           colAlpha = 1,
+                                           legendPosition = 'right',
+                                           legendLabSize = 10,
+                                           legendIconSize = 5.0)
+vol_res_Female_Head_F14+ ggplot2::coord_cartesian()
+
+# Female Abdomen TraKD F14 ----
+# Input data
+data_Female_Abdo_F14 <- read.table("Counts_Female_Abdo_F14.txt", header=TRUE, skip=1, row.names=1)
+countdata_Female_Abdo_F14 <- data_Female_Abdo_F14[ , 6:ncol(data_Female_Abdo_F14)]
+metadata_Female_Abdo_F14 <- read.table("Metadata_Female_Abdo_F14.txt", header=TRUE)
+
+# Convert metadata characters to factors
+metadata_Female_Abdo_F14$All <- as.factor(metadata_Female_Abdo_F14$All)
+
+# Setup DESeq dataset & Multi-factor design
+dds_Female_Abdo_F14 <- DESeqDataSetFromMatrix(countData = countdata_Female_Abdo_F14, 
+                                              colData = metadata_Female_Abdo_F14, 
+                                              design = ~ All)
+
+# Pre-filtering low count genes
+keep_Female_Abdo_F14 <- rowSums(counts(dds_Female_Abdo_F14) >= 10) >= smallestGroupSize
+dds_Female_Abdo_F14 <- dds_Female_Abdo_F14[keep_Female_Abdo_F14,]
+
+# Differential expression analysis
+dds_Female_Abdo_F14 <- DESeq(dds_Female_Abdo_F14)
+
+# DESeq result
+res_Female_Abdomen_F14 <- results(dds_Female_Abdo_F14, contrast = c("All", "TraKD_F14_Female_Triploid_Abdomen",
+                                                                    "TraKD_F14_Female_Diploid_Abdomen"))
+write.csv(res_Female_Abdomen_F14, file = "res_Female_Abdomen_F14.csv")
+
+plotMA(res_Female_Abdomen_F14,ylim = c(-8,8),alpha=0.05)
+
+keyvals_res_Female_Abdomen_F14 <- ifelse(
+  res_Female_Abdomen_F14$log2FoldChange > 1 & res_Female_Abdomen_F14$padj < 0.05, 'indianred3',
+  ifelse(res_Female_Abdomen_F14$log2FoldChange < -1 & res_Female_Abdomen_F14$padj < 0.05, 'dodgerblue3',
+         'grey'))
+keyvals_res_Female_Abdomen_F14[is.na(keyvals_res_Female_Abdomen_F14)] <- 'grey'
+names(keyvals_res_Female_Abdomen_F14)[keyvals_res_Female_Abdomen_F14 == 'dodgerblue3'] <- 'Down regulated'
+names(keyvals_res_Female_Abdomen_F14)[keyvals_res_Female_Abdomen_F14 == 'grey'] <- 'Not significant'
+names(keyvals_res_Female_Abdomen_F14)[keyvals_res_Female_Abdomen_F14 == 'indianred3'] <- 'Up regulated'
+
+vol_res_Female_Abdomen_F14 <- EnhancedVolcano(res_Female_Abdomen_F14,
+                                              lab = rownames(res_Female_Abdomen_F14),
+                                              x = 'log2FoldChange',
+                                              y = 'padj',
+                                              selectLab = rownames(res_Female_Abdomen_F14)[which(names(keyvals_res_Female_Abdomen_F14) %in% c('high', 'low'))],
+                                              xlab = bquote(~Log[2]~ 'fold change'),
+                                              ylab = bquote(~-Log[10]~ 'Padj'),
+                                              title = 'DEGs in Triploid vs Diploid',
+                                              subtitle = "Female Abdomen TraKD F14",
+                                              pCutoff = 0.05, FCcutoff = 1,
+                                              pointSize = 5, labSize = 4,
+                                              axisLabSize=10, titleLabSize=12,
+                                              subtitleLabSize=10, captionLabSize=10,
+                                              colCustom = keyvals_res_Female_Abdomen_F14,
+                                              colAlpha = 1,
+                                              legendPosition = 'right',
+                                              legendLabSize = 10,
+                                              legendIconSize = 5.0)
+vol_res_Female_Abdomen_F14+ ggplot2::coord_cartesian()
